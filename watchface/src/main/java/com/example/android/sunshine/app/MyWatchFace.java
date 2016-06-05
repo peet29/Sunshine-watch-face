@@ -31,11 +31,13 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
+import android.text.format.DateFormat;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
 import java.lang.ref.WeakReference;
+import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -89,11 +91,13 @@ public class MyWatchFace extends CanvasWatchFaceService {
         Paint mBackgroundPaint;
         Paint mTextPaint;
         boolean mAmbient;
+        Calendar mCalendar;
         Time mTime;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 mTime.clear(intent.getStringExtra("time-zone"));
+                mCalendar.setTimeZone(TimeZone.getDefault());
                 mTime.setToNow();
             }
         };
@@ -128,6 +132,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
 
             mTime = new Time();
+            mCalendar = Calendar.getInstance();
         }
 
         @Override
@@ -249,6 +254,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
+
+            boolean is24Hour = DateFormat.is24HourFormat(MyWatchFace.this);
             // Draw the background.
             if (isInAmbientMode()) {
                 canvas.drawColor(Color.BLACK);
@@ -258,9 +265,18 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
             // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
             mTime.setToNow();
-            String text = mAmbient
+            /*String text = is24Hour
                     ? String.format("%d:%02d", mTime.hour, mTime.minute)
-                    : String.format("%d:%02d:%02d", mTime.hour, mTime.minute, mTime.second);
+                    : String.format("%d:%02d %s", mTime.hour, mTime.minute, mTime.second);*/
+            String text;
+            if(is24Hour){
+                text = String.format("%d:%02d %s", mTime.hour, mTime.minute, mTime.second);
+            }else{
+
+                String amPmString = getAmPmString(mCalendar.get(Calendar.AM_PM));
+              text = String.format("%d:%02d %s", mCalendar.get(Calendar.HOUR), mTime.minute,amPmString);
+            }
+
             canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
         }
 
@@ -273,6 +289,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
             if (shouldTimerBeRunning()) {
                 mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
             }
+        }
+        private String getAmPmString(int amPm) {
+            return amPm == Calendar.AM ? "AM" : "PM";
         }
 
         /**
