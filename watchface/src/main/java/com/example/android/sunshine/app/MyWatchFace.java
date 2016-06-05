@@ -34,7 +34,6 @@ import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.DateFormat;
-import android.text.format.Time;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
@@ -101,13 +100,13 @@ public class MyWatchFace extends CanvasWatchFaceService {
         Calendar mCalendar;
         Date mDate;
         SimpleDateFormat mDateFormat;
-        Time mTime;
+        //Time mTime;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                mTime.clear(intent.getStringExtra("time-zone"));
+                //mTime.clear(intent.getStringExtra("time-zone"));
                 mCalendar.setTimeZone(TimeZone.getDefault());
-                mTime.setToNow();
+                //mTime.setToNow();
             }
         };
         int mTapCount;
@@ -158,7 +157,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mAMString = resources.getString(R.string.am_string);
             mPMSTring = resources.getString(R.string.pm_string);
 
-            mTime = new Time();
+            //mTime = new Time();
             mCalendar = Calendar.getInstance();
             mDate = new Date();
             initFormats();
@@ -191,8 +190,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 registerReceiver();
 
                 // Update time zone in case it changed while we weren't visible.
-                mTime.clear(TimeZone.getDefault().getID());
-                mTime.setToNow();
+                //mTime.clear(TimeZone.getDefault().getID());
+                //mTime.setToNow();
             } else {
                 unregisterReceiver();
             }
@@ -315,17 +314,17 @@ public class MyWatchFace extends CanvasWatchFaceService {
             }
 
             // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
-            mTime.setToNow();
+            //mTime.setToNow();
             /*String text = is24Hour
                     ? String.format("%d:%02d", mTime.hour, mTime.minute)
                     : String.format("%d:%02d %s", mTime.hour, mTime.minute, mTime.second);*/
             String text;
             if(is24Hour){
-                text = String.format("%d:%02d", mTime.hour, mTime.minute);
+                text = String.format("%d:%02d",mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.MINUTE));
             }else{
 
                 String amPmString = getAmPmString(mCalendar.get(Calendar.AM_PM));
-              text = String.format("%d:%02d %s", mCalendar.get(Calendar.HOUR), mTime.minute,amPmString);
+              text = String.format("%d:%02d %s", mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.MINUTE),amPmString);
             }
 
 
