@@ -270,7 +270,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     : String.format("%d:%02d %s", mTime.hour, mTime.minute, mTime.second);*/
             String text;
             if(is24Hour){
-                text = String.format("%d:%02d %s", mTime.hour, mTime.minute, mTime.second);
+                text = String.format("%d:%02d", mTime.hour, mTime.minute);
             }else{
 
                 String amPmString = getAmPmString(mCalendar.get(Calendar.AM_PM));
