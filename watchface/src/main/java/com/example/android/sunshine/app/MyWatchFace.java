@@ -34,6 +34,7 @@ import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
@@ -95,6 +96,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
         Paint mBackgroundPaint;
         Paint mTextPaint;
         Paint mDatePaint;
+        Paint mTempPaint;
         Bitmap mWeatherIcon;
         boolean mAmbient;
         Calendar mCalendar;
@@ -113,13 +115,16 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         String mAMString;
         String mPMSTring;
+        String mHightTemp;
+        String mLowTemp;
 
         float mXOffset;
         float mYOffset;
         float mLineHeight;
-
         float mWeatherXoffset;
         float mWeatherYoffset;
+        float mTempXoffset;
+        float mTempYoffset;
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
@@ -142,6 +147,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mWeatherXoffset = resources.getDimension(R.dimen.weather_x_offset);
             mWeatherYoffset = resources.getDimension(R.dimen.weather_y_offset);
             mLineHeight = resources.getDimension(R.dimen.digital_line_height);
+            mTempXoffset = resources.getDimension(R.dimen.temp_x_offset);
+            mTempYoffset = resources.getDimension(R.dimen.temp_y_offset);
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
@@ -152,10 +159,16 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mDatePaint = new Paint();
             mDatePaint = createTextPaint(resources.getColor(R.color.digital_date));
 
+            mTempPaint = new Paint();
+            mTempPaint = createTextPaint(resources.getColor(R.color.temp_text_color));
+
             mWeatherIcon = BitmapFactory.decodeResource(getResources(), getIconResourceForWeatherCondition(200));
 
             mAMString = resources.getString(R.string.am_string);
             mPMSTring = resources.getString(R.string.pm_string);
+
+            mHightTemp = "20";
+            mLowTemp = "10";
 
             //mTime = new Time();
             mCalendar = Calendar.getInstance();
@@ -166,6 +179,11 @@ public class MyWatchFace extends CanvasWatchFaceService {
         private void initFormats() {
             mDateFormat = new SimpleDateFormat("E, d MMM yyy", Locale.getDefault());
             mDateFormat.setCalendar(mCalendar);
+        }
+
+        private String formatTemp(String tmp){
+            Log.d("temp",tmp+"\u00b0");
+            return tmp+"\u00b0";
         }
 
         @Override
@@ -230,9 +248,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
             float textSize = resources.getDimension(isRound
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
 
-            float dateTextStize = resources.getDimension(R.dimen.date_text_size);
+            float dateTextSize = resources.getDimension(R.dimen.date_text_size);
+            float tempTextSize = resources.getDimension(R.dimen.date_text_size);
+
             mTextPaint.setTextSize(textSize);
-            mDatePaint.setTextSize(dateTextStize);
+            mDatePaint.setTextSize(dateTextSize);
+            mTempPaint.setTextSize(tempTextSize);
         }
 
         @Override
@@ -256,6 +277,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 if (mLowBitAmbient) {
                     mTextPaint.setAntiAlias(!inAmbientMode);
                     mDatePaint.setAntiAlias(!inAmbientMode);
+                    mTempPaint.setAntiAlias(!inAmbientMode);
 
                 }
                 invalidate();
@@ -311,6 +333,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 //canvas.drawBitmap(mGrayBackgroundBitmap, 0, 0, mBackgroundPaint);
             } else {
                 canvas.drawBitmap(mWeatherIcon, mWeatherXoffset, mWeatherYoffset, null);
+                canvas.drawText(formatTemp(mHightTemp), mTempXoffset, mTempYoffset, mTempPaint);
+                canvas.drawText(formatTemp(mLowTemp), mTempXoffset+60, mTempYoffset, mTempPaint);
             }
 
             // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
