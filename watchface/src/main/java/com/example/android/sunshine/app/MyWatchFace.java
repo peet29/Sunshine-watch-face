@@ -21,6 +21,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -94,6 +96,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
         Paint mBackgroundPaint;
         Paint mTextPaint;
         Paint mDatePaint;
+        Bitmap mWeatherIcon;
         boolean mAmbient;
         Calendar mCalendar;
         Date mDate;
@@ -109,15 +112,21 @@ public class MyWatchFace extends CanvasWatchFaceService {
         };
         int mTapCount;
 
+        String mAMString;
+        String mPMSTring;
+
         float mXOffset;
         float mYOffset;
         float mLineHeight;
 
+        float mWeatherXoffset;
+        float mWeatherYoffset;
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
          */
         boolean mLowBitAmbient;
+        private boolean mBurnInProtection;
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -131,6 +140,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     .build());
             Resources resources = MyWatchFace.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
+            mWeatherXoffset = resources.getDimension(R.dimen.weather_x_offset);
+            mWeatherYoffset = resources.getDimension(R.dimen.weather_y_offset);
             mLineHeight = resources.getDimension(R.dimen.digital_line_height);
 
             mBackgroundPaint = new Paint();
@@ -142,6 +153,10 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mDatePaint = new Paint();
             mDatePaint = createTextPaint(resources.getColor(R.color.digital_date));
 
+            mWeatherIcon = BitmapFactory.decodeResource(getResources(), getIconResourceForWeatherCondition(200));
+
+            mAMString = resources.getString(R.string.am_string);
+            mPMSTring = resources.getString(R.string.pm_string);
 
             mTime = new Time();
             mCalendar = Calendar.getInstance();
@@ -216,14 +231,16 @@ public class MyWatchFace extends CanvasWatchFaceService {
             float textSize = resources.getDimension(isRound
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
 
+            float dateTextStize = resources.getDimension(R.dimen.date_text_size);
             mTextPaint.setTextSize(textSize);
-            mDatePaint.setTextSize(40);
+            mDatePaint.setTextSize(dateTextStize);
         }
 
         @Override
         public void onPropertiesChanged(Bundle properties) {
             super.onPropertiesChanged(properties);
             mLowBitAmbient = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
+            mBurnInProtection = properties.getBoolean(PROPERTY_BURN_IN_PROTECTION, false);
         }
 
         @Override
@@ -239,6 +256,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 mAmbient = inAmbientMode;
                 if (mLowBitAmbient) {
                     mTextPaint.setAntiAlias(!inAmbientMode);
+                    mDatePaint.setAntiAlias(!inAmbientMode);
+
                 }
                 invalidate();
             }
@@ -287,6 +306,14 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
+            if (mAmbient && (mLowBitAmbient || mBurnInProtection)) {
+                canvas.drawColor(Color.BLACK);
+            } else if (mAmbient) {
+                //canvas.drawBitmap(mGrayBackgroundBitmap, 0, 0, mBackgroundPaint);
+            } else {
+                canvas.drawBitmap(mWeatherIcon, mWeatherXoffset, mWeatherYoffset, null);
+            }
+
             // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
             mTime.setToNow();
             /*String text = is24Hour
@@ -325,7 +352,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
             }
         }
         private String getAmPmString(int amPm) {
-            return amPm == Calendar.AM ? "AM" : "PM";
+            return amPm == Calendar.AM ? mAMString : mPMSTring;
         }
 
         /**
@@ -347,6 +374,35 @@ public class MyWatchFace extends CanvasWatchFaceService {
                         - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
             }
+        }
+
+        public int getIconResourceForWeatherCondition(int weatherId) {
+            // Based on weather code data found at:
+            // http://bugs.openweathermap.org/projects/api/wiki/Weather_Condition_Codes
+            if (weatherId >= 200 && weatherId <= 232) {
+                return R.drawable.ic_storm;
+            } else if (weatherId >= 300 && weatherId <= 321) {
+                return R.drawable.ic_light_rain;
+            } else if (weatherId >= 500 && weatherId <= 504) {
+                return R.drawable.ic_rain;
+            } else if (weatherId == 511) {
+                return R.drawable.ic_snow;
+            } else if (weatherId >= 520 && weatherId <= 531) {
+                return R.drawable.ic_rain;
+            } else if (weatherId >= 600 && weatherId <= 622) {
+                return R.drawable.ic_snow;
+            } else if (weatherId >= 701 && weatherId <= 761) {
+                return R.drawable.ic_fog;
+            } else if (weatherId == 761 || weatherId == 781) {
+                return R.drawable.ic_storm;
+            } else if (weatherId == 800) {
+                return R.drawable.ic_clear;
+            } else if (weatherId == 801) {
+                return R.drawable.ic_light_clouds;
+            } else if (weatherId >= 802 && weatherId <= 804) {
+                return R.drawable.ic_cloudy;
+            }
+            return -1;
         }
     }
 }
