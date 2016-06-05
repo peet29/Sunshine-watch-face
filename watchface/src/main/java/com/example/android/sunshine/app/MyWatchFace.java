@@ -37,7 +37,10 @@ import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
 import java.lang.ref.WeakReference;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
@@ -90,8 +93,11 @@ public class MyWatchFace extends CanvasWatchFaceService {
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
         Paint mTextPaint;
+        Paint mDatePaint;
         boolean mAmbient;
         Calendar mCalendar;
+        Date mDate;
+        SimpleDateFormat mDateFormat;
         Time mTime;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
             @Override
@@ -105,6 +111,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         float mXOffset;
         float mYOffset;
+        float mLineHeight;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -124,6 +131,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     .build());
             Resources resources = MyWatchFace.this.getResources();
             mYOffset = resources.getDimension(R.dimen.digital_y_offset);
+            mLineHeight = resources.getDimension(R.dimen.digital_line_height);
 
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
@@ -131,8 +139,19 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mTextPaint = new Paint();
             mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
 
+            mDatePaint = new Paint();
+            mDatePaint = createTextPaint(resources.getColor(R.color.digital_date));
+
+
             mTime = new Time();
             mCalendar = Calendar.getInstance();
+            mDate = new Date();
+            initFormats();
+        }
+
+        private void initFormats() {
+            mDateFormat = new SimpleDateFormat("E, d MMM yyy", Locale.getDefault());
+            mDateFormat.setCalendar(mCalendar);
         }
 
         @Override
@@ -198,6 +217,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
 
             mTextPaint.setTextSize(textSize);
+            mDatePaint.setTextSize(40);
         }
 
         @Override
@@ -244,9 +264,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     break;
                 case TAP_TYPE_TAP:
                     // The user has completed the tap gesture.
-                    mTapCount++;
+                   /* mTapCount++;
                     mBackgroundPaint.setColor(resources.getColor(mTapCount % 2 == 0 ?
-                            R.color.background : R.color.background2));
+                            R.color.background : R.color.background2));*/
                     break;
             }
             invalidate();
@@ -256,6 +276,10 @@ public class MyWatchFace extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
 
             boolean is24Hour = DateFormat.is24HourFormat(MyWatchFace.this);
+            long now = System.currentTimeMillis();
+            mCalendar.setTimeInMillis(now);
+            mDate.setTime(now);
+
             // Draw the background.
             if (isInAmbientMode()) {
                 canvas.drawColor(Color.BLACK);
@@ -276,6 +300,16 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 String amPmString = getAmPmString(mCalendar.get(Calendar.AM_PM));
               text = String.format("%d:%02d %s", mCalendar.get(Calendar.HOUR), mTime.minute,amPmString);
             }
+
+
+            //set up Date
+            if (getPeekCardPosition().isEmpty()) {
+                // Date
+                canvas.drawText(
+                        mDateFormat.format(mDate),
+                        mXOffset+5, mYOffset + mLineHeight, mDatePaint);
+            }
+
 
             canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
         }
