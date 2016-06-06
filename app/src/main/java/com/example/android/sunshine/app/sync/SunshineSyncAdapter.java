@@ -369,6 +369,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 updateWidgets();
                 updateMuzei();
                 notifyWeather();
+               Log.d("Hight temp", Double.toString(cVVector.firstElement().getAsDouble(WeatherContract.WeatherEntry.COLUMN_MAX_TEMP)));
             }
             Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " Inserted");
             setLocationStatus(getContext(), LOCATION_STATUS_OK);
@@ -378,6 +379,11 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             e.printStackTrace();
             setLocationStatus(getContext(), LOCATION_STATUS_SERVER_INVALID);
         }
+    }
+
+    private void getTodayWeather()
+    {
+
     }
 
     private void updateWidgets() {
