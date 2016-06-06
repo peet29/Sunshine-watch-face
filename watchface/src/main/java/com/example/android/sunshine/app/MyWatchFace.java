@@ -191,8 +191,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mAMString = resources.getString(R.string.am_string);
             mPMSTring = resources.getString(R.string.pm_string);
 
-            mHightTemp = "20";
-            mLowTemp = "10";
+            mHightTemp = "--";
+            mLowTemp = "--";
 
             //mTime = new Time();
             mCalendar = Calendar.getInstance();
